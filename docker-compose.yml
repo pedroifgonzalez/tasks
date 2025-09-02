@@ -1,0 +1,26 @@
+
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: tasks-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: tasks_app_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: tasks123
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  adminer:
+    image: adminer
+    container_name: tasks-adminer
+    restart: always
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:
