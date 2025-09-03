@@ -1,15 +1,20 @@
 import os
 import sys
+from datetime import datetime, timedelta, timezone
 from typing import Generator
 
 import pytest
 from fastapi.testclient import TestClient
+from jose import jwt
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from main import app
+from src.core.config import settings
 from src.db.base import Base
 from src.db.session import get_db
+from src.modules.auth.service import TokenPayload
+from src.modules.users.model import User
 
 db_url = os.getenv("DATABASE_URL", "").lower()
 
@@ -72,3 +77,24 @@ def client(db: Session):
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
+
+
+def create_test_token(user: User) -> str:
+    """Create a test JWT token for authentication."""
+    now = datetime.now(timezone.utc)
+    expire = now + timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
+    payload = TokenPayload(id=user.id, email=user.email, exp=expire)
+    token = jwt.encode(
+        {**payload.model_dump(), "id": str(payload.id)},
+        settings.JWT_SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM,
+    )
+    return token
+
+
+@pytest.fixture(scope="function")
+def db_user(db: Session):
+    user = User(email="testuser@example.com", hashed_password="test")
+    db.add(user)
+    db.commit()
+    yield user

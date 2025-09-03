@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from src.modules.tasks.model import Task
 from src.modules.users.model import User
-from src.tests.unit.tasks.conftest import create_test_token
+from src.tests.unit.conftest import create_test_token
 
 
 def test_create_task(db_user: User, client: TestClient):
