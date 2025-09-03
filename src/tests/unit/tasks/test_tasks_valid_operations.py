@@ -33,7 +33,7 @@ async def test_get_tasks(
     response = await client.get("/tasks", headers=headers)
 
     assert response.status_code == 200
-    assert len(response.json()) == 1  # only owner sees their own tasks
+    assert len(response.json().get("items")) == 1  # only owner sees their own tasks
 
     result = await db.execute(select(Task))
     all_tasks = result.scalars().all()

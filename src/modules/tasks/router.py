@@ -1,7 +1,8 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
+from src.common.pagination import PaginatedResponse
 from src.modules.auth.dependencies import get_current_user
 from src.modules.tasks.dependencies import get_task_service
 from src.modules.tasks.dto import CreateTask, UpdateTask
@@ -21,12 +22,24 @@ async def create_task(
     return await tasks_service.create(user=user, task=task)
 
 
-@router.get("/", response_model=list[ReadTask])
+@router.get("/", response_model=PaginatedResponse[ReadTask])
 async def get_tasks(
+    page: int = Query(1, ge=1, description="Page number starting from 1"),
+    page_size: int = Query(
+        10, ge=1, le=100, description="Number of items per page (max 100)"
+    ),
     tasks_service: TaskService = Depends(get_task_service),
     user: User = Depends(get_current_user),
 ):
-    return await tasks_service.get_all(user=user)
+    tasks, total = await tasks_service.get_all(
+        user=user, page=page, page_size=page_size
+    )
+    return PaginatedResponse.create(
+        items=tasks,
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.get("/{task_id}", response_model=ReadTask)

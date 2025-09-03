@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.logging import logger
@@ -42,15 +42,30 @@ class TaskRepository:
         await self.db.refresh(db_task)
         return db_task
 
-    async def get_all(self, user_id: UUID) -> list[Task]:
+    async def get_all(
+        self, user_id: UUID, page: int, page_size: int
+    ) -> tuple[list[Task], int]:
         """Get all tasks.
+
+        Args:
+            user_id (UUID): The user owner ID of the task.
+            page (int): The page number.
+            page_size (int): The number of tasks per page.
 
         Returns:
             list[Task]: The list of tasks.
+            total[int]: The total number of tasks.
 
         """
-        result = await self.db.execute(select(Task).where(Task.user_id == user_id))
-        return list(result.scalars().all())
+        query = select(Task).where(Task.user_id == user_id)
+        result = await self.db.execute(
+            query.offset((page - 1) * page_size).limit(page_size)
+        )
+        total = await self.db.execute(
+            select(func.count()).select_from(Task).where(Task.user_id == user_id)
+        )
+        paginated_tasks = result.scalars().all()
+        return list(paginated_tasks), total.scalar_one()
 
     async def get_by_id(self, user_id: UUID, id: UUID) -> Task | None:
         """Get a task by id.

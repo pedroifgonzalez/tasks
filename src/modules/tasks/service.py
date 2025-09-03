@@ -16,10 +16,14 @@ class TaskService:
         audit(f"Task with title {task.title} created for user {user.id}")
         return ReadTask.model_validate(db_task)
 
-    async def get_all(self, user: User) -> list[ReadTask]:
+    async def get_all(
+        self, user: User, page: int, page_size: int
+    ) -> tuple[list[ReadTask], int]:
+        tasks, total = await self.repository.get_all(
+            user_id=user.id, page=page, page_size=page_size
+        )
         audit(f"User {user.id} retrieved all its tasks")
-        tasks = await self.repository.get_all(user_id=user.id)
-        return [ReadTask.model_validate(task) for task in tasks]
+        return [ReadTask.model_validate(task) for task in tasks], total
 
     async def get_by_id(self, user: User, task_id: UUID) -> ReadTask:
         audit(f"User {user.id} retrieved task with id {task_id}")
