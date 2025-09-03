@@ -1,7 +1,6 @@
 from typing import Generic, TypeVar
 
-from pydantic import BaseModel, Field
-from pydantic.generics import GenericModel
+from pydantic import BaseModel, ConfigDict, Field
 
 T = TypeVar("T")
 
@@ -13,8 +12,10 @@ class PaginationParams(BaseModel):
     page_size: int = Field(10, ge=1, le=100, description="Number of items per page")
 
 
-class PaginatedResponse(GenericModel, Generic[T]):
+class PaginatedResponse(BaseModel, Generic[T]):
     """Generic paginated response model."""
+
+    model_config = ConfigDict(from_attributes=True)
 
     items: list[T]
     total: int

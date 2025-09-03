@@ -1,7 +1,9 @@
+import logging
 import os
 import sys
 from datetime import datetime, timedelta, timezone
 
+import pytest
 import pytest_asyncio
 from httpx import AsyncClient
 from jose import jwt
@@ -17,6 +19,7 @@ from src.modules.users.model import User
 
 # --- Database URL ---
 db_url = os.getenv("DATABASE_URL", "").lower()
+disable_logs = os.getenv("DISABLE_LOGS", "true").lower() in ["true", "1", "t"]
 
 production_indicators = ["production", "prod", "live"]
 if not db_url.strip() or any(ind in db_url for ind in production_indicators):
@@ -67,6 +70,48 @@ async def cleanup_data(db: AsyncSession):
     for table in reversed(Base.metadata.sorted_tables):
         await db.execute(table.delete())
     await db.commit()
+
+
+# --- Test Configuration ---
+
+
+@pytest.fixture(autouse=disable_logs)
+def disable_logging():
+    """Disable logging during tests."""
+    # Disable standard logging
+    logging.disable(logging.CRITICAL)
+
+    # Disable Loguru logs
+    from loguru import logger
+
+    # Remove all existing handlers
+    logger.remove()
+
+    # Add a null handler to suppress all logs
+    null_handler = logger.add(lambda _: None, level="TRACE")
+
+    yield
+
+    # Re-enable standard logging
+    logging.disable(logging.NOTSET)
+
+    # Remove the null handler and re-add the default logging configuration
+    logger.remove(null_handler)
+
+    # Re-initialize logging with default configuration
+    from src.core.logging import logger as app_logger
+
+    app_logger.add(
+        sys.stdout,
+        format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+        "<level>{level: <8}</level> | "
+        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
+        "<level>{message}</level>",
+        level="DEBUG",
+        backtrace=True,
+        diagnose=True,
+        enqueue=True,
+    )
 
 
 # --- FastAPI test client ---
