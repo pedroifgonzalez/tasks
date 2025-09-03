@@ -11,30 +11,28 @@ class TaskService:
     def __init__(self, repository: TaskRepository):
         self.repository = repository
 
-    def create(self, user: User, task: CreateTask) -> ReadTask:
-        db_task = self.repository.create(user_id=user.id, task=task)
+    async def create(self, user: User, task: CreateTask) -> ReadTask:
+        db_task = await self.repository.create(user_id=user.id, task=task)
         audit(f"Task with title {task.title} created for user {user.id}")
         return ReadTask.model_validate(db_task)
 
-    def get_all(self, user: User) -> list[ReadTask]:
+    async def get_all(self, user: User) -> list[ReadTask]:
         audit(f"User {user.id} retrieved all its tasks")
-        return [
-            ReadTask.model_validate(task)
-            for task in self.repository.get_all(user_id=user.id)
-        ]
+        tasks = await self.repository.get_all(user_id=user.id)
+        return [ReadTask.model_validate(task) for task in tasks]
 
-    def get_by_id(self, user: User, task_id: UUID) -> ReadTask:
+    async def get_by_id(self, user: User, task_id: UUID) -> ReadTask:
         audit(f"User {user.id} retrieved task with id {task_id}")
-        return ReadTask.model_validate(
-            self.repository.get_by_id(user_id=user.id, id=task_id)
-        )
+        task = await self.repository.get_by_id(user_id=user.id, id=task_id)
+        return ReadTask.model_validate(task)
 
-    def update(self, user: User, task_id: UUID, task: UpdateTask) -> ReadTask:
+    async def update(self, user: User, task_id: UUID, task: UpdateTask) -> ReadTask:
         audit(f"User {user.id} updated task with id {task_id}")
-        return ReadTask.model_validate(
-            self.repository.update(user_id=user.id, id=task_id, task=task)
+        updated_task = await self.repository.update(
+            user_id=user.id, id=task_id, task=task
         )
+        return ReadTask.model_validate(updated_task)
 
-    def delete(self, user: User, task_id: UUID) -> None:
+    async def delete(self, user: User, task_id: UUID) -> None:
         audit(f"User {user.id} deleted task with id {task_id}")
-        self.repository.delete(user_id=user.id, id=task_id)
+        await self.repository.delete(user_id=user.id, id=task_id)

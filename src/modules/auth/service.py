@@ -83,7 +83,7 @@ class AuthService:
             raise HTTPException(403, "Invalid token")
         return token_payload
 
-    def authenticate_user(self, credentials: str) -> User:
+    async def authenticate_user(self, credentials: str) -> User:
         """
         Authenticates a user based on credentials validation
 
@@ -98,10 +98,10 @@ class AuthService:
             is not found
         """
         data = self._decode_access_token(credentials)
-        user = self.user_repository.get_by_id(id=data.id)
+        user = await self.user_repository.get_by_id(id=data.id)
         return user
 
-    def login_user(self, user_data: CreateUser) -> str:
+    async def login_user(self, user_data: CreateUser) -> str:
         """
         Logs in a user
 
@@ -118,11 +118,11 @@ class AuthService:
         """
         logger.debug(f"Login attempt for {user_data.email}")
         try:
-            user_found = self.user_repository.get_by_email(email=user_data.email)
+            user_found = await self.user_repository.get_by_email(email=user_data.email)
         except HTTPException:
             logger.error(f"Login failed: user {user_data.email} not found")
             raise HTTPException(status_code=403, detail="Incorrect email or password")
-        valid_password = self.auth_repository.verify_password(
+        valid_password = await self.auth_repository.verify_password(
             plain_password=user_data.password,
             hashed_password=user_found.hashed_password,
         )

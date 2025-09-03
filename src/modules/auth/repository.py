@@ -7,7 +7,7 @@ class AuthRepository:
             schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=10
         )
 
-    def get_password_hash(self, password: str) -> str:
+    async def get_password_hash(self, password: str) -> str:
         """
         Hash the given plain password and return the hashed string.
 
@@ -19,7 +19,7 @@ class AuthRepository:
         """
         return self.pwd_context.hash(password)
 
-    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
+    async def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """
         Verify that the given plain password matches the given hashed password.
 

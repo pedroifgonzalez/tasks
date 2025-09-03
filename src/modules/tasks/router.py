@@ -13,45 +13,45 @@ router = APIRouter()
 
 
 @router.post("/", response_model=ReadTask)
-def create_task(
+async def create_task(
     task: CreateTask,
     tasks_service: TaskService = Depends(get_task_service),
     user: User = Depends(get_current_user),
 ):
-    return tasks_service.create(user=user, task=task)
+    return await tasks_service.create(user=user, task=task)
 
 
 @router.get("/", response_model=list[ReadTask])
-def get_tasks(
+async def get_tasks(
     tasks_service: TaskService = Depends(get_task_service),
     user: User = Depends(get_current_user),
 ):
-    return tasks_service.get_all(user=user)
+    return await tasks_service.get_all(user=user)
 
 
 @router.get("/{task_id}", response_model=ReadTask)
-def get_task(
+async def get_task(
     task_id: UUID,
     tasks_service: TaskService = Depends(get_task_service),
     user: User = Depends(get_current_user),
 ):
-    return tasks_service.get_by_id(user=user, task_id=task_id)
+    return await tasks_service.get_by_id(user=user, task_id=task_id)
 
 
 @router.put("/{task_id}", response_model=ReadTask)
-def update_task(
+async def update_task(
     task_id: UUID,
     task: UpdateTask,
     tasks_service: TaskService = Depends(get_task_service),
     user: User = Depends(get_current_user),
 ):
-    return tasks_service.update(user=user, task_id=task_id, task=task)
+    return await tasks_service.update(user=user, task_id=task_id, task=task)
 
 
 @router.delete("/{task_id}")
-def delete_task(
+async def delete_task(
     task_id: UUID,
     tasks_service: TaskService = Depends(get_task_service),
     user: User = Depends(get_current_user),
 ):
-    return tasks_service.delete(user=user, task_id=task_id)
+    return await tasks_service.delete(user=user, task_id=task_id)

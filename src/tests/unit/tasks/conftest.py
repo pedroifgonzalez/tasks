@@ -1,14 +1,14 @@
 from uuid import uuid4
 
-import pytest
-from sqlalchemy.orm import Session
+import pytest_asyncio
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.tasks.model import Task
 from src.modules.users.model import User
 
 
-@pytest.fixture(scope="function")
-def db_task(db: Session, db_user: User):
+@pytest_asyncio.fixture(scope="function")
+async def db_task(db: AsyncSession, db_user: User):
     db_task = Task(
         title="Test Task",
         user_id=db_user.id,
@@ -16,20 +16,22 @@ def db_task(db: Session, db_user: User):
         id=uuid4(),
     )
     db.add(db_task)
-    db.commit()
+    await db.commit()
+    await db.refresh(db_task)
     yield db_task
 
 
-@pytest.fixture(scope="function")
-def another_db_user(db: Session):
+@pytest_asyncio.fixture(scope="function")
+async def another_db_user(db: AsyncSession):
     user = User(email="another_db_user@example.com", hashed_password="test")
     db.add(user)
-    db.commit()
+    await db.commit()
+    await db.refresh(user)
     yield user
 
 
-@pytest.fixture(scope="function")
-def another_db_task(db: Session, another_db_user: User):
+@pytest_asyncio.fixture(scope="function")
+async def another_db_task(db: AsyncSession, another_db_user: User):
     db_task = Task(
         title="Another Test Task",
         user_id=another_db_user.id,
@@ -37,5 +39,6 @@ def another_db_task(db: Session, another_db_user: User):
         id=uuid4(),
     )
     db.add(db_task)
-    db.commit()
+    await db.commit()
+    await db.refresh(db_task)
     yield db_task

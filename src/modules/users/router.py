@@ -8,5 +8,7 @@ router = APIRouter()
 
 
 @router.post("/")
-def sign_up(user: CreateUser, user_service: UserService = Depends(get_user_service)):
-    return user_service.create(user)
+async def sign_up(
+    user: CreateUser, user_service: UserService = Depends(get_user_service)
+):
+    return await user_service.create(user)

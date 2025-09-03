@@ -1,14 +1,12 @@
 import os
 import sys
 from datetime import datetime, timedelta, timezone
-from typing import Generator
 
-import pytest
-from fastapi.testclient import TestClient
+import pytest_asyncio
+from httpx import AsyncClient
 from jose import jwt
 from passlib.context import CryptContext
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from main import app
 from src.core.config import settings
@@ -17,74 +15,89 @@ from src.db.session import get_db
 from src.modules.auth.service import TokenPayload
 from src.modules.users.model import User
 
+# --- Database URL ---
 db_url = os.getenv("DATABASE_URL", "").lower()
 
-# Block production DBs
 production_indicators = ["production", "prod", "live"]
-if not db_url.strip() or any(
-    indicator in db_url for indicator in production_indicators
-):
-    print("ERROR: Tests cannot run against a production database. Aborting.")
+if not db_url.strip() or any(ind in db_url for ind in production_indicators):
+    print("❌ ERROR: Tests cannot run against a production database.")
     sys.exit(1)
-
-# Test engine and session
-engine = create_engine(db_url, future=True)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 TEST_USER_PASSWORD = "testuserpassword"
 
 
-@pytest.fixture(scope="session", autouse=True)
-def create_tables():
-    """Create all tables once per test session."""
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
-    yield
-    Base.metadata.drop_all(bind=engine)
+# --- Prepare database schema once per test session ---
+@pytest_asyncio.fixture(scope="session", autouse=True)
+async def prepare_database():
+    async_engine = create_async_engine(db_url, future=True, echo=False)
+
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+
+    yield  # Run all tests
+
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
+    await async_engine.dispose()
 
 
-@pytest.fixture(scope="function")
-def db() -> Generator[Session, None, None]:
-    """Provide a transactional scope around each test."""
-    session: Session = TestingSessionLocal()
-    try:
+# --- Create fresh DB + session per test ---
+@pytest_asyncio.fixture(scope="function")
+async def db():
+    async_engine = create_async_engine(db_url, future=True, echo=False)
+    async_session = async_sessionmaker(
+        async_engine, class_=AsyncSession, expire_on_commit=False
+    )
+    async with async_session() as session:
         yield session
-    finally:
-        session.rollback()
-        session.close()
+        await session.rollback()
+    await async_engine.dispose()
 
 
-@pytest.fixture(scope="function", autouse=True)
-def cleanup_data(db: Session):
-    """Ensure tables are cleared between tests."""
+# --- Cleanup tables between tests ---
+@pytest_asyncio.fixture(scope="function", autouse=True)
+async def cleanup_data(db: AsyncSession):
     for table in reversed(Base.metadata.sorted_tables):
-        db.execute(table.delete())
-    db.commit()
+        await db.execute(table.delete())
+    await db.commit()
     yield
     for table in reversed(Base.metadata.sorted_tables):
-        db.execute(table.delete())
-    db.commit()
+        await db.execute(table.delete())
+    await db.commit()
 
 
-@pytest.fixture(scope="function")
-def client(db: Session):
-    """FastAPI test client with overridden DB dependency."""
-
-    def override_get_db():
-        try:
-            yield db
-        finally:
-            pass
+# --- FastAPI test client ---
+@pytest_asyncio.fixture(scope="function")
+async def client(db: AsyncSession):
+    async def override_get_db():
+        yield db
 
     app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as c:
-        yield c
-    app.dependency_overrides.clear()
+
+    try:
+        # Try new httpx syntax first
+        from httpx import ASGITransport
+
+        transport = ASGITransport(app=app)
+        async with AsyncClient(
+            transport=transport, base_url="http://test", follow_redirects=True
+        ) as ac:
+            yield ac
+    except (ImportError, TypeError):
+        # Fall back to old syntax
+        async with AsyncClient(
+            app=app, base_url="http://test", follow_redirects=True
+        ) as ac:
+            yield ac
+    finally:
+        app.dependency_overrides.clear()
 
 
+# --- Helpers ---
 def create_test_token(user: User) -> str:
-    """Create a test JWT token for authentication."""
     now = datetime.now(timezone.utc)
     expire = now + timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = TokenPayload(id=user.id, email=user.email, exp=expire)
@@ -96,11 +109,12 @@ def create_test_token(user: User) -> str:
     return token
 
 
-@pytest.fixture(scope="function")
-def db_user(db: Session):
+@pytest_asyncio.fixture(scope="function")
+async def db_user(db: AsyncSession):
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=10)
     hashed_password = pwd_context.hash(TEST_USER_PASSWORD)
     user = User(email="testuser@example.com", hashed_password=hashed_password)
     db.add(user)
-    db.commit()
+    await db.commit()
+    await db.refresh(user)
     yield user
