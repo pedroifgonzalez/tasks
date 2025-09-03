@@ -4,7 +4,6 @@ from uuid import UUID
 
 from fastapi.security import HTTPBearer
 from jose import jwt
-from passlib.context import CryptContext
 from pydantic.main import BaseModel
 from starlette.exceptions import HTTPException
 
@@ -24,34 +23,6 @@ class TokenPayload(BaseModel):
 class AuthService:
     def __init__(self, repository: UserRepository) -> None:
         self.repository = repository
-        self.pwd_context = CryptContext(
-            schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=10
-        )
-
-    def get_password_hash(self, password: str) -> str:
-        """
-        Hash the given plain password and return the hashed string.
-
-        Args:
-            password (str): The plain password to hash.
-
-        Returns:
-            str: The hashed password string.
-        """
-        return self.pwd_context.hash(password)
-
-    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
-        """
-        Verify that the given plain password matches the given hashed password.
-
-        Args:
-            plain_password (str): The plain password to verify.
-            hashed_password (str): The hashed password to verify against.
-
-        Returns:
-            bool: True if the passwords match, False otherwise.
-        """
-        return self.pwd_context.verify(plain_password, hashed_password)
 
     def create_access_token(
         self, data: TokenPayload, expires_delta: Optional[timedelta] = None
@@ -85,6 +56,15 @@ class AuthService:
         return encoded_jwt
 
     def decode_access_token(self, token: str) -> TokenPayload:
+        """
+        Decode token to get user-related data. Used for authentication.
+
+        Args:
+            token (str): Token to be decoded
+
+        Returns:
+            TokenPayload: Token data
+        """
         try:
             payload = jwt.decode(
                 token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]
@@ -97,6 +77,19 @@ class AuthService:
         return token_payload
 
     def authenticate_user(self, credentials: str) -> User:
+        """
+        Authenticates a user based on credentials validation
+
+        Args:
+            credentials (str): Expected encoded data string
+
+        Returns:
+            User: user authenticated
+
+        Raises:
+            HTTPException: in case the credentials can not be validated or the user id
+            is not found
+        """
         data = self.decode_access_token(credentials)
         user = self.repository.get_by_id(id=data.id)
         return user

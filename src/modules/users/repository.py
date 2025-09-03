@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from src.modules.users.dto import CreateUserDto
+from src.modules.users.dto import UserDto
 from src.modules.users.model import User
 
 
@@ -11,7 +11,7 @@ class UserRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def create(self, user: CreateUserDto) -> User:
+    def create(self, user: UserDto) -> User:
         db_user = self.db.query(User).filter(User.email == user.email).first()
         if db_user:
             raise HTTPException(status_code=400, detail="User already exists")

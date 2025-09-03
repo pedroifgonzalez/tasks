@@ -15,6 +15,7 @@ def test_create_task(db_user: User, db: Session, client: TestClient):
     response = client.post("/tasks", json={"title": "Test Task"}, headers=headers)
     assert response.status_code == 200
     assert response.json()["title"] == "Test Task"
+    assert len(db.query(Task).filter(Task.user_id == db_user.id).all()) == 1
 
 
 def test_get_tasks(db_task: Task, another_db_task, db: Session, client: TestClient):
@@ -26,11 +27,7 @@ def test_get_tasks(db_task: Task, another_db_task, db: Session, client: TestClie
     assert len(db.query(Task).all()) == 2
 
 
-def test_get_task(
-    db_task: Task,
-    db: Session,
-    client: TestClient,
-):
+def test_get_task(db_task: Task, client: TestClient):
     token = create_test_token(db_task.owner)
     headers = {"Authorization": f"Bearer {token}"}
     response = client.get(f"/tasks/{db_task.id}", headers=headers)
@@ -58,9 +55,7 @@ def test_get_task(
         "Update task status",
     ],
 )
-def test_update_task(
-    db_task: Task, db: Session, client: TestClient, property: str, new_value: str
-):
+def test_update_task(db_task: Task, client: TestClient, property: str, new_value: str):
     token = create_test_token(db_task.owner)
     headers = {"Authorization": f"Bearer {token}"}
     response = client.put(
@@ -70,7 +65,7 @@ def test_update_task(
     assert response.json()[property] == new_value
 
 
-def test_delete_task(db_task: Task, db: Session, client: TestClient):
+def test_delete_task(db_task: Task, client: TestClient):
     token = create_test_token(db_task.owner)
     headers = {"Authorization": f"Bearer {token}"}
     response = client.delete(f"/tasks/{db_task.id}", headers=headers)
