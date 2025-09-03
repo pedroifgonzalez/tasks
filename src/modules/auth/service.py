@@ -8,6 +8,7 @@ from pydantic.main import BaseModel
 from starlette.exceptions import HTTPException
 
 from src.core.config import settings
+from src.core.logging import audit, logger
 from src.modules.auth.repository import AuthRepository
 from src.modules.users.dto import CreateUser
 from src.modules.users.model import User
@@ -77,7 +78,8 @@ class AuthService:
             token_payload = TokenPayload(
                 id=payload["id"], email=payload["email"], exp=payload["exp"]
             )
-        except Exception:
+        except Exception as error:
+            logger.error(f"Error decoding token: {error}")
             raise HTTPException(403, "Invalid token")
         return token_payload
 
@@ -114,16 +116,20 @@ class AuthService:
                 - if user with email is not found
                 - if password does not match
         """
+        logger.debug(f"Login attempt for {user_data.email}")
         try:
             user_found = self.user_repository.get_by_email(email=user_data.email)
         except HTTPException:
+            logger.error(f"Login failed: user {user_data.email} not found")
             raise HTTPException(status_code=403, detail="Incorrect email or password")
         valid_password = self.auth_repository.verify_password(
             plain_password=user_data.password,
             hashed_password=user_found.hashed_password,
         )
         if not valid_password:
+            logger.error(f"Login failed: invalid password for user {user_data.email}")
             raise HTTPException(status_code=403, detail="Incorrect email or password")
         data = TokenPayload(id=user_found.id, email=user_found.email)
         token = self._create_access_token(data=data)
+        audit(f"Login successful for {user_data.email}")
         return token

@@ -3,6 +3,7 @@ from uuid import UUID
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from src.core.logging import logger
 from src.modules.tasks.dto import CreateTask, UpdateTask
 from src.modules.tasks.model import Task
 
@@ -31,6 +32,7 @@ class TaskRepository:
             .first()
         )
         if db_task:
+            logger.error(f"There is a task with the same title {task.title}")
             raise HTTPException(status_code=400, detail="Task already exists")
         db_task = Task(title=task.title, description=task.description, user_id=user_id)
         self.db.add(db_task)
@@ -64,6 +66,7 @@ class TaskRepository:
             self.db.query(Task).filter(Task.id == id, Task.user_id == user_id).first()
         )
         if not db_task:
+            logger.error(f"Task with id {id} not found")
             raise HTTPException(status_code=404, detail="Task not found")
         return db_task
 
@@ -84,6 +87,7 @@ class TaskRepository:
         """
         db_task = self.get_by_id(id=id, user_id=user_id)
         if not db_task:
+            logger.error(f"Task with id {id} not found")
             raise HTTPException(status_code=404, detail="Task not found")
         if task.title is not None:
             db_task.title = task.title
@@ -110,6 +114,7 @@ class TaskRepository:
         """
         db_task = self.get_by_id(id=id, user_id=user_id)
         if not db_task:
+            logger.error(f"Task with id {id} not found")
             raise HTTPException(status_code=404, detail="Task not found")
         self.db.delete(db_task)
         self.db.commit()
