@@ -8,6 +8,8 @@ from pydantic.main import BaseModel
 from starlette.exceptions import HTTPException
 
 from src.core.config import settings
+from src.modules.auth.repository import AuthRepository
+from src.modules.users.dto import CreateUser
 from src.modules.users.model import User
 from src.modules.users.repository import UserRepository
 
@@ -17,14 +19,17 @@ token_auth_scheme = HTTPBearer()
 class TokenPayload(BaseModel):
     id: UUID
     email: str
-    exp: Optional[datetime]
+    exp: Optional[datetime] = None
 
 
 class AuthService:
-    def __init__(self, repository: UserRepository) -> None:
-        self.repository = repository
+    def __init__(
+        self, user_repository: UserRepository, auth_repository: AuthRepository
+    ):
+        self.user_repository = user_repository
+        self.auth_repository = auth_repository
 
-    def create_access_token(
+    def _create_access_token(
         self, data: TokenPayload, expires_delta: Optional[timedelta] = None
     ) -> str:
         """
@@ -55,7 +60,7 @@ class AuthService:
         )
         return encoded_jwt
 
-    def decode_access_token(self, token: str) -> TokenPayload:
+    def _decode_access_token(self, token: str) -> TokenPayload:
         """
         Decode token to get user-related data. Used for authentication.
 
@@ -90,6 +95,35 @@ class AuthService:
             HTTPException: in case the credentials can not be validated or the user id
             is not found
         """
-        data = self.decode_access_token(credentials)
-        user = self.repository.get_by_id(id=data.id)
+        data = self._decode_access_token(credentials)
+        user = self.user_repository.get_by_id(id=data.id)
         return user
+
+    def login_user(self, user_data: CreateUser) -> str:
+        """
+        Logs in a user
+
+        Args:
+            user_data (CreateUser): email and password of the user
+
+        Returns:
+            str: token as a result of successful authentication
+
+        Raises:
+            HTTPException:
+                - if user with email is not found
+                - if password does not match
+        """
+        try:
+            user_found = self.user_repository.get_by_email(email=user_data.email)
+        except HTTPException:
+            raise HTTPException(status_code=403, detail="Incorrect email or password")
+        valid_password = self.auth_repository.verify_password(
+            plain_password=user_data.password,
+            hashed_password=user_found.hashed_password,
+        )
+        if not valid_password:
+            raise HTTPException(status_code=403, detail="Incorrect email or password")
+        data = TokenPayload(id=user_found.id, email=user_found.email)
+        token = self._create_access_token(data=data)
+        return token

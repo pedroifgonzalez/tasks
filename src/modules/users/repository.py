@@ -28,3 +28,9 @@ class UserRepository:
         if not db_user:
             raise HTTPException(status_code=404, detail="User not found")
         return db_user
+
+    def get_by_email(self, email: str) -> User:
+        db_user = self.db.query(User).filter(User.email == email).first()
+        if not db_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return db_user

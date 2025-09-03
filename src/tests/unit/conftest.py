@@ -6,6 +6,7 @@ from typing import Generator
 import pytest
 from fastapi.testclient import TestClient
 from jose import jwt
+from passlib.context import CryptContext
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -29,6 +30,9 @@ if not db_url.strip() or any(
 # Test engine and session
 engine = create_engine(db_url, future=True)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+TEST_USER_PASSWORD = "testuserpassword"
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -94,7 +98,9 @@ def create_test_token(user: User) -> str:
 
 @pytest.fixture(scope="function")
 def db_user(db: Session):
-    user = User(email="testuser@example.com", hashed_password="test")
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=10)
+    hashed_password = pwd_context.hash(TEST_USER_PASSWORD)
+    user = User(email="testuser@example.com", hashed_password=hashed_password)
     db.add(user)
     db.commit()
     yield user

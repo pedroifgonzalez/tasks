@@ -1,16 +1,18 @@
 from fastapi import Depends, Security
 from fastapi.security import HTTPAuthorizationCredentials
 
-from src.common.dependencies import get_user_repository
+from src.common.dependencies import get_auth_repository, get_user_repository
+from src.modules.auth.repository import AuthRepository
 from src.modules.auth.service import AuthService, token_auth_scheme
 from src.modules.users.model import User
 from src.modules.users.repository import UserRepository
 
 
 def get_auth_service(
-    repository: UserRepository = Depends(get_user_repository),
+    user_repository: UserRepository = Depends(get_user_repository),
+    auth_repository: AuthRepository = Depends(get_auth_repository),
 ) -> AuthService:
-    return AuthService(repository=repository)
+    return AuthService(user_repository=user_repository, auth_repository=auth_repository)
 
 
 def get_current_user(
