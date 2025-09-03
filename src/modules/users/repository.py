@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
@@ -20,3 +22,9 @@ class UserRepository:
 
     def get_all(self) -> list[User]:
         return self.db.query(User).all()
+
+    def get_by_id(self, id: UUID) -> User:
+        db_user = self.db.get(User, id)
+        if not db_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return db_user

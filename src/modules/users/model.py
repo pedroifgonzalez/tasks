@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID as TypedUUID
 from uuid import uuid4
 
 from sqlalchemy import UUID, DateTime, String, func
@@ -9,7 +10,7 @@ from src.db.base import Base
 
 class User(Base):
     __tablename__ = "users"
-    id: Mapped[str] = mapped_column(
+    id: Mapped[TypedUUID] = mapped_column(
         UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid4())
     )
     email: Mapped[str] = mapped_column(

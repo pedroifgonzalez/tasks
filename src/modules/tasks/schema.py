@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
@@ -6,7 +7,7 @@ from src.modules.tasks.model import TaskStatus
 
 
 class ReadTask(BaseModel):
-    id: str
+    id: UUID
     title: str
     description: str | None = None
     status: TaskStatus

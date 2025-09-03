@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
@@ -9,10 +11,11 @@ class TaskRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def create(self, task: CreateTask) -> Task:
+    def create(self, user_id: UUID, task: CreateTask) -> Task:
         """Create a new task.
 
         Args:
+            user_id (UUID): The user owner ID of the task.
             task (CreateTask): The task to create.
 
         Returns:
@@ -24,32 +27,31 @@ class TaskRepository:
         """
         db_task = (
             self.db.query(Task)
-            .filter(Task.title == task.title, Task.user_id == task.user_id)
+            .filter(Task.title == task.title, Task.user_id == user_id)
             .first()
         )
         if db_task:
             raise HTTPException(status_code=400, detail="Task already exists")
-        db_task = Task(
-            title=task.title, description=task.description, user_id=task.user_id
-        )
+        db_task = Task(title=task.title, description=task.description, user_id=user_id)
         self.db.add(db_task)
         self.db.commit()
         return db_task
 
-    def get_all(self) -> list[Task]:
+    def get_all(self, user_id: UUID) -> list[Task]:
         """Get all tasks.
 
         Returns:
             list[Task]: The list of tasks.
 
         """
-        return self.db.query(Task).all()
+        return self.db.query(Task).filter(Task.user_id == user_id).all()
 
-    def get_by_id(self, task_id: str) -> Task | None:
+    def get_by_id(self, user_id: UUID, id: UUID) -> Task | None:
         """Get a task by id.
 
         Args:
-            task_id (str): The id of the task.
+            user_id (UUID): The id of the authenticated user
+            id (UUID): The id of the task.
 
         Returns:
             Task: The task.
@@ -58,16 +60,19 @@ class TaskRepository:
             HTTPException: If the task is not found.
 
         """
-        db_task = self.db.query(Task).filter(Task.id == task_id).first()
+        db_task = (
+            self.db.query(Task).filter(Task.id == id, Task.user_id == user_id).first()
+        )
         if not db_task:
             raise HTTPException(status_code=404, detail="Task not found")
         return db_task
 
-    def update(self, id: str, task: UpdateTask) -> Task:
+    def update(self, id: UUID, user_id: UUID, task: UpdateTask) -> Task:
         """Update a task.
 
         Args:
-            id (str): The id of the task.
+            id (UUID): The id of the task.
+            user_id (UUID): The id of the authenticated user
             task (UpdateTask): The task to update.
 
         Returns:
@@ -77,7 +82,7 @@ class TaskRepository:
             HTTPException: If the task is not found.
 
         """
-        db_task = self.get_by_id(id)
+        db_task = self.get_by_id(id=id, user_id=user_id)
         if not db_task:
             raise HTTPException(status_code=404, detail="Task not found")
         if task.title is not None:
@@ -89,10 +94,11 @@ class TaskRepository:
         self.db.commit()
         return db_task
 
-    def delete(self, id: str):
+    def delete(self, user_id: UUID, id: UUID):
         """Delete a task.
 
         Args:
+            user_id (UUID): The id of the authenticated user
             id (str): The id of the task.
 
         Returns:
@@ -102,7 +108,7 @@ class TaskRepository:
             HTTPException: If the task is not found.
 
         """
-        db_task = self.get_by_id(id)
+        db_task = self.get_by_id(id=id, user_id=user_id)
         if not db_task:
             raise HTTPException(status_code=404, detail="Task not found")
         self.db.delete(db_task)
