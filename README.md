@@ -265,7 +265,7 @@ export DISABLE_LOGS=false
 
 ### Test Database
 
-Tests use a separate test database specified by the `TEST_DATABASE_URL` environment variable. The test database is automatically created and dropped during test execution.
+The test database is automatically created and dropped during test execution.
 
 ### Test Fixtures
 
@@ -355,7 +355,6 @@ Copy the `.env.example` file to `.env` and configure the following variables:
 ```env
 # Database configuration
 DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:5432/tasks_db
-TEST_DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:5432/tasks_test_db
 
 # Authentication configuration
 SECRET_KEY=your-secret-key-here-make-it-long-and-random
