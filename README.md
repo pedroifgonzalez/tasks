@@ -107,7 +107,7 @@ The API uses JWT authentication. To authenticate:
      'http://localhost:8000/auth/login' \
      -H 'Content-Type: application/json' \
      -d '{
-       "username": "user@example.com",
+       "email": "user@example.com",
        "password": "secure-password"
      }'
    ```
@@ -128,7 +128,6 @@ curl -X 'POST' \
   -d '{
     "title": "My first task",
     "description": "This is an example description",
-    "status": "pending"
   }'
 ```
 
