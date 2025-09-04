@@ -18,9 +18,7 @@ REST API for task management (TODOs) developed with FastAPI and PostgreSQL.
    cd tasks
    ```
 
-2. Create a `.env` file in the project root with the necessary environment variables (you can copy from `.env.example` if it exists).
-
-3. Start the services with Docker Compose:
+2. Start the services with Docker Compose:
    ```bash
    docker-compose up -d
    ```
@@ -30,7 +28,7 @@ REST API for task management (TODOs) developed with FastAPI and PostgreSQL.
    - PostgreSQL at localhost:5432
    - Adminer (PostgreSQL web interface) at http://localhost:8080
 
-4. Verify the API is running:
+3. Verify the API is running:
    ```bash
    curl http://localhost:8000/health
    ```
@@ -54,15 +52,6 @@ REST API for task management (TODOs) developed with FastAPI and PostgreSQL.
 
    # Sync dependencies from uv.lock
    uv sync
-
-   # Or install in development mode if no uv.lock exists
-   uv pip install -e ".[dev]"
-   ```
-
-   Or using `pip` (slower):
-   ```bash
-   pip install -e ".[dev]"
-   ```
 
 3. Configure environment variables in a `.env` file.
 
