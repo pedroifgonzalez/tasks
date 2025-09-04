@@ -25,4 +25,5 @@ class Settings(BaseSettings):
 
 
 # Load settings from environment variables
-settings = Settings()  # pydantic-settings automatically loads from .env
+# pydantic-settings automatically loads from .env
+settings = Settings()  # type: ignore

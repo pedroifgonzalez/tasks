@@ -21,5 +21,5 @@ class UserService:
         return await self.user_repository.create(user_dto)
 
     async def get_all(self) -> list[User]:
-        audit(f"All users retrieved")
+        audit("All users retrieved")
         return await self.user_repository.get_all()

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from jose import jwt
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -122,23 +122,13 @@ async def client(db: AsyncSession):
 
     app.dependency_overrides[get_db] = override_get_db
 
-    try:
-        # Try new httpx syntax first
-        from httpx import ASGITransport
+    transport = ASGITransport(app=app)
+    async with AsyncClient(
+        transport=transport, base_url="http://test", follow_redirects=True
+    ) as ac:
+        yield ac
 
-        transport = ASGITransport(app=app)
-        async with AsyncClient(
-            transport=transport, base_url="http://test", follow_redirects=True
-        ) as ac:
-            yield ac
-    except (ImportError, TypeError):
-        # Fall back to old syntax
-        async with AsyncClient(
-            app=app, base_url="http://test", follow_redirects=True
-        ) as ac:
-            yield ac
-    finally:
-        app.dependency_overrides.clear()
+    app.dependency_overrides.clear()
 
 
 # --- Helpers ---

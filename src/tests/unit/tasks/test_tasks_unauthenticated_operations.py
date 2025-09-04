@@ -52,7 +52,7 @@ async def test_unauthenticated_update_task(db_task: Task, client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_delete_task(db_task: Task, client: AsyncClient):
-    headers = {"Authorization": f"Bearer invalid_token"}
+    headers = {"Authorization": "Bearer invalid_token"}
     response = await client.delete(f"/tasks/{db_task.id}", headers=headers)
     assert response.status_code == 403
 

@@ -66,5 +66,5 @@ async def test_invalid_data_update_task(
 async def test_invalid_data_delete_task(db_task: Task, client: AsyncClient):
     token = create_test_token(db_task.owner)
     headers = {"Authorization": f"Bearer {token}"}
-    response = await client.delete(f"/tasks/12", headers=headers)
+    response = await client.delete("/tasks/12", headers=headers)
     assert response.status_code == 422
