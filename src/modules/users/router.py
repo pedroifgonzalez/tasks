@@ -7,7 +7,7 @@ from src.modules.users.service import UserService
 router = APIRouter()
 
 
-@router.post("/")
+@router.post("")
 async def sign_up(
     user: CreateUser, user_service: UserService = Depends(get_user_service)
 ):

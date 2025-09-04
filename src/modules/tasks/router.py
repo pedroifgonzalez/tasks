@@ -13,7 +13,7 @@ from src.modules.users.model import User
 router = APIRouter()
 
 
-@router.post("/", response_model=ReadTask)
+@router.post("", response_model=ReadTask)
 async def create_task(
     task: CreateTask,
     tasks_service: TaskService = Depends(get_task_service),
@@ -22,7 +22,7 @@ async def create_task(
     return await tasks_service.create(user=user, task=task)
 
 
-@router.get("/", response_model=PaginatedResponse[ReadTask])
+@router.get("", response_model=PaginatedResponse[ReadTask])
 async def get_tasks(
     page: int = Query(1, ge=1, description="Page number starting from 1"),
     page_size: int = Query(
