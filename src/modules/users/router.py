@@ -11,4 +11,4 @@ router = APIRouter()
 async def sign_up(
     user: CreateUser, user_service: UserService = Depends(get_user_service)
 ):
-    return await user_service.create(user)
+    await user_service.create(user)

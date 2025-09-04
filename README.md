@@ -93,7 +93,7 @@ The API uses JWT authentication. To authenticate:
 1. Register a new user:
    ```bash
    curl -X 'POST' \
-     'http://localhost:8000/users/' \
+     'http://localhost:8000/users' \
      -H 'Content-Type: application/json' \
      -d '{
        "email": "user@example.com",
@@ -153,7 +153,7 @@ curl -X 'PUT' \
   -H 'Content-Type: application/json' \
   -d '{
     "title": "Updated title",
-    "status": "completed"
+    "status": "COMPLETED"
   }'
 ```
 

@@ -7,6 +7,11 @@ from src.modules.users.router import router as user_router
 app = FastAPI()
 
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
+
 app.include_router(user_router, prefix="/users", tags=["Users"])
 app.include_router(task_router, prefix="/tasks", tags=["Tasks"])
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
