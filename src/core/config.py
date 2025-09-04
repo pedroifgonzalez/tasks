@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     DB_POOL_TIMEOUT: int = 30
     DB_POOL_RECYCLE: int = 1800  # 30 minutes
 
+    # Application configuration
+    LOG_LEVEL: str = "INFO"
+    ENVIRONMENT: str = "development"
+
 
 # Load settings from environment variables
 # pydantic-settings automatically loads from .env

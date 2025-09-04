@@ -3,6 +3,8 @@ from pathlib import Path
 
 from loguru import logger
 
+from src.core.config import settings
+
 LOG_DIR = Path("logs")
 LOG_DIR.mkdir(exist_ok=True)
 
@@ -14,7 +16,7 @@ logger.add(
     "<level>{level: <8}</level> | "
     "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
     "<level>{message}</level>",
-    level="DEBUG",
+    level=settings.LOG_LEVEL,
     backtrace=True,
     diagnose=True,
     enqueue=True,
