@@ -7,7 +7,7 @@ REST API for task management (TODOs) developed with FastAPI and PostgreSQL.
 ### Prerequisites
 
 - Docker and Docker Compose
-- Python 3.9+
+- Python 3.12
 - PostgreSQL (only if not using Docker)
 
 ### Using Docker (Recommended)
