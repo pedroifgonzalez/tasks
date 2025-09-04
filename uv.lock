@@ -514,6 +514,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/3b/a4/ab6b7589382ca3df236e03faa71deac88cae040af60c071a78d254a62172/passlib-1.7.4-py2.py3-none-any.whl", hash = "sha256:aa6bca462b8d8bda89c70b382f0c298a20b5560af6cbfa2dce410c0a2fb669f1", size = 525554, upload-time = "2020-10-08T19:00:49.856Z" },
 ]
 
+[package.optional-dependencies]
+bcrypt = [
+    { name = "bcrypt" },
+]
+
 [[package]]
 name = "pathspec"
 version = "0.12.1"
@@ -883,7 +888,7 @@ dependencies = [
     { name = "fastapi", extra = ["standard"] },
     { name = "gunicorn" },
     { name = "loguru" },
-    { name = "passlib" },
+    { name = "passlib", extra = ["bcrypt"] },
     { name = "psycopg2" },
     { name = "pydantic-settings" },
     { name = "python-jose" },
@@ -903,11 +908,11 @@ dev = [
 requires-dist = [
     { name = "alembic", specifier = ">=1.16.5" },
     { name = "asyncpg", specifier = ">=0.30.0" },
-    { name = "bcrypt", specifier = ">=4.3.0" },
+    { name = "bcrypt", specifier = ">=4.0.1" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.116.1" },
     { name = "gunicorn", specifier = ">=23.0.0" },
     { name = "loguru", specifier = ">=0.7.3" },
-    { name = "passlib", specifier = ">=1.7.4" },
+    { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
     { name = "psycopg2", specifier = ">=2.9.10" },
     { name = "pydantic-settings", specifier = ">=2.10.1" },
     { name = "python-jose", specifier = ">=3.5.0" },
